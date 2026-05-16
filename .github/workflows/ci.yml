@@ -1,0 +1,39 @@
+name: Validate ELK Config
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-filebeat:
+    name: Validate Filebeat Config
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: Validate Filebeat config
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml \
+            docker.elastic.co/beats/filebeat:8.13.0 \
+            filebeat test config --strict.perms=false
+
+  validate-logstash:
+    name: Validate Logstash Pipeline
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: Validate Logstash pipeline config
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/logstash/pipeline:/usr/share/logstash/pipeline \
+            -v ${{ github.workspace }}/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml \
+            docker.elastic.co/logstash/logstash:8.13.0 \
+            logstash --config.test_and_exit
